@@ -26,6 +26,7 @@ gem "bootsnap", require: false
 gem "stripe"
 gem "enumerize"
 gem "aasm"
+gem "sidekiq", "~> 7.3"
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
@@ -39,5 +40,3 @@ group :development, :test do
   gem "rspec-rails", "~> 7.0.0"
   gem "factory_bot_rails"
 end
-
-gem "stringio", "~> 3.1.2" # fix ambiguous specs warning
