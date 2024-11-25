@@ -10,8 +10,29 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 0) do
+ActiveRecord::Schema[7.2].define(version: 2024_11_24_113815) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
+  create_table "events", force: :cascade do |t|
+    t.string "stripe_id", null: false
+    t.string "stripe_type", null: false
+    t.string "state", default: "pending", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["stripe_id"], name: "index_events_on_stripe_id", unique: true
+  end
+
+  create_table "events_subscriptions", id: false, force: :cascade do |t|
+    t.bigint "event_id", null: false
+    t.bigint "subscription_id", null: false
+  end
+
+  create_table "subscriptions", force: :cascade do |t|
+    t.string "stripe_id", null: false
+    t.string "state", default: "unpaid", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["stripe_id"], name: "index_subscriptions_on_stripe_id", unique: true
+  end
 end
