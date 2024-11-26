@@ -6,7 +6,7 @@ require "rails/all"
 # you've limited to :test, :development, or :production.
 Bundler.require(*Rails.groups)
 
-module CodingChallenge
+module StripeEventHandler
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 7.2
@@ -32,6 +32,6 @@ module CodingChallenge
     config.active_job.queue_adapter = :sidekiq
     # middlewares used by sidekiq/web
     config.middleware.use ActionDispatch::Cookies
-    config.middleware.use ActionDispatch::Session::CookieStore, key: "coding_challenge_session"
+    config.middleware.use ActionDispatch::Session::CookieStore, key: "stripe_event_handler_session"
   end
 end
