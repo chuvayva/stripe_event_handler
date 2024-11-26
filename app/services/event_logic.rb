@@ -1,7 +1,7 @@
 module EventLogic
   class << self
     def process_event(event)
-      return unless event.pending?
+      return unless event.pending? || event.error?
 
       event.update(state: :processing)
       Rails.logger.info "Event processing started: #{event.stripe_type} #{event.stripe_id}"

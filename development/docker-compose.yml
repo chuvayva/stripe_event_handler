@@ -1,0 +1,78 @@
+version: "3.8"
+services:
+  web:
+    build:
+      context: ..
+      dockerfile: development/Dockerfile
+    command: bundle exec rails s -p 3000 -e development -b '0.0.0.0'
+    environment:
+      RAILS_ENV: development
+      DATABASE_URL: postgresql://postgres:password@db:5432/stripe_event_handler_development
+      REDIS_URL: redis://redis:6379/0
+      BUNDLE_PATH: /bundle
+    volumes:
+      - ../:/rails-app
+      - bundle:/bundle
+    ports:
+      - "3000:3000"
+    depends_on:
+      - "db"
+      - "redis"
+
+  test:
+    build:
+      context: ..
+      dockerfile: development/Dockerfile
+    command: bundle exec rspec
+    environment:
+      RAILS_ENV: test
+      DATABASE_URL: postgresql://postgres:password@db:5432/stripe_event_handler_test
+      REDIS_URL: redis://redis:6379/1
+      BUNDLE_PATH: /bundle
+    volumes:
+      - ../:/rails-app
+      - bundle:/bundle
+    depends_on:
+      - "db"
+      - "redis"
+
+  sidekiq:
+    build:
+      context: ..
+      dockerfile: development/Dockerfile
+    command: bundle exec sidekiq
+    volumes:
+      - ../:/rails-app
+    environment:
+      RAILS_ENV: development
+      DATABASE_URL: postgresql://postgres:password@db:5432/stripe_event_handler_development
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      - "redis"
+
+  db:
+    image: postgres
+    restart: always
+    environment:
+      - POSTGRES_HOST_AUTH_METHOD=trust
+    volumes:
+      - db:/var/lib/postgresql/data
+    logging:
+      driver: none
+    ports:
+      - 5432:5432
+
+  redis:
+    image: redis:7.4.1-alpine
+    command: redis-server
+    volumes:
+      - redis:/data
+    ports:
+      - 6379
+    logging:
+      driver: none
+
+volumes:
+  db:
+  bundle:
+  redis:

@@ -1,20 +1,18 @@
 default: &default
   adapter: postgresql
   encoding: utf8
-  # For details on connection pooling, see Rails configuration guide
-  # https://guides.rubyonrails.org/configuring.html#database-pooling
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
 
 development:
   <<: *default
-  database: coding_challenge_development
+  database: stripe_event_handler_development
 
 test:
   <<: *default
-  database: coding_challenge_test
+  database: stripe_event_handler_test
 
 production:
   <<: *default
-  database: coding_challenge_production
+  database: stripe_event_handler_production
   username: coding_challenge
   password: <%= ENV["CODING_CHALLENGE_DATABASE_PASSWORD"] %>
