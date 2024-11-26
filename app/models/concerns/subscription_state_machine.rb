@@ -26,6 +26,6 @@ module SubscriptionStateMachine
   end
 
   def log_state_change
-    Rails.logger.info "Subscription state changed: id #{id} from #{aasm.from_state} to #{aasm.to_state} (event: #{aasm.current_event})"
+    Rails.logger.info "Subscription state changed: id #{id} from #{state} to #{aasm.to_state} (event: #{aasm.current_event})"
   end
 end

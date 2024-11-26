@@ -11,9 +11,13 @@ module WebhookService
 
       return if skip_processing?(stripe_event)
 
-      event = Event.create(stripe_id: stripe_event.id, stripe_type: stripe_event.type)
+      event = Event.create(
+        stripe_id: stripe_event.id,
+        stripe_type: stripe_event.type,
+        json: stripe_event.to_json
+      )
 
-      EventLogic.process_event(event, stripe_event)
+      EventHandlerJob.perform_later event
     rescue JSON::ParserError
       Rails.logger.error "Stripe service. Invalid payload"
       nil
