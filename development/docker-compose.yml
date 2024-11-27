@@ -1,52 +1,38 @@
 version: "3.8"
+
+x-common: &common
+  build:
+    context: ..
+    dockerfile: development/Dockerfile
+  environment:
+    RAILS_ENV: development
+    DATABASE_URL: postgresql://postgres:password@db:5432/stripe_event_handler_development
+    REDIS_URL: redis://redis:6379/0
+  volumes:
+    - ../:/rails-app
+    - bundle:/usr/local/bundle
+  depends_on:
+    - db
+    - redis
+
 services:
   web:
-    build:
-      context: ..
-      dockerfile: development/Dockerfile
-    command: bundle exec rails s -p 3000 -e development -b '0.0.0.0'
-    environment:
-      RAILS_ENV: development
-      DATABASE_URL: postgresql://postgres:password@db:5432/stripe_event_handler_development
-      REDIS_URL: redis://redis:6379/0
-    volumes:
-      - ../:/rails-app
-      - bundle:/usr/local/bundle
+    <<: *common
+    command: rails s -p 3000 -e development -b '0.0.0.0'
     ports:
       - "3000:3000"
-    depends_on:
-      - "db"
-      - "redis"
 
   test:
-    build:
-      context: ..
-      dockerfile: development/Dockerfile
-    command: bundle exec rspec
+    <<: *common
+    command: rspec
     environment:
       RAILS_ENV: test
       DATABASE_URL: postgresql://postgres:password@db:5432/stripe_event_handler_test
       REDIS_URL: redis://redis:6379/1
-    volumes:
-      - ../:/rails-app
-      - bundle:/usr/local/bundle
-    depends_on:
-      - "db"
-      - "redis"
 
   sidekiq:
-    build:
-      context: ..
-      dockerfile: development/Dockerfile
+    <<: *common
     command: bundle exec sidekiq
-    volumes:
-      - ../:/rails-app
-    environment:
-      RAILS_ENV: development
-      DATABASE_URL: postgresql://postgres:password@db:5432/stripe_event_handler_development
-      REDIS_URL: redis://redis:6379/0
-    depends_on:
-      - "redis"
 
   db:
     image: postgres
