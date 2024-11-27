@@ -26,14 +26,37 @@ RSpec.describe EventHandlerJob, type: :job do
   context "when event is 'invoice paid'" do
     let(:event) { create :event, 'invoice.payment_succeeded', subscription_id: }
 
-    let(:subscription_id) { "sub_1QOHUKC1ckIJ9PpdfbEdGIqH" }
-    let!(:subscription) { create(:subscription, :unpaid, stripe_id: subscription_id) }
+    context 'when invoice event is not connected to a Subscription' do
+      let(:subscription_id) { nil }
 
-    it 'updates Subscription' do
-      run_job
+      it 'does not update any subscription' do
+        expect { run_job }.not_to change(Subscription.paid, :count)
+      end
+    end
 
-      expect(subscription.reload).to be_paid
-      expect(subscription.events).to include(event)
+    context 'when Subscription exists in database' do
+      let(:subscription_id) { "sub_1QOHUKC1ckIJ9PpdfbEdGIqH" }
+      let!(:subscription) { create(:subscription, :unpaid, stripe_id: subscription_id) }
+
+      it 'updates Subscription' do
+        run_job
+
+        expect(subscription.reload).to be_paid
+        expect(subscription.events).to include(event)
+      end
+    end
+
+    context 'when Subscription does not exist in database' do
+      let(:subscription_id) { "sub_1QOHUKC1ckIJ9PpdfbEdGIqH" }
+
+      it 'creates paid Subscription' do
+        expect { run_job }.to change(Subscription, :count).by(1)
+        expect(Subscription.last).to have_attributes(
+          state: 'paid',
+          stripe_id: subscription_id,
+          events: [ event ]
+        )
+      end
     end
   end
 

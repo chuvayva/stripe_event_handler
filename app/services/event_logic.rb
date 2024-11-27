@@ -1,7 +1,7 @@
 module EventLogic
   class << self
     def process_event(event)
-      return unless event.pending? || event.error?
+      return unless can_process?(event)
 
       event.update(state: :processing)
       Rails.logger.info "Event processing started: #{event.stripe_type} #{event.stripe_id}"
@@ -20,6 +20,10 @@ module EventLogic
       Rails.logger.error "Event processing failed: #{event.stripe_type} #{event.stripe_id}. Error: #{e.message}"
 
       raise
+    end
+
+    def can_process?(event)
+      event.pending? || event.error?
     end
   end
 end
