@@ -4,9 +4,14 @@ module WebhookService
                              customer.subscription.deleted
                              invoice.payment_succeeded]
 
+  MAX_EVENT_AGE = 300 # seconds
+
   class << self
     def event_received(payload, signature)
-      stripe_event = Stripe::Webhook.construct_event(payload, signature, WEBHOOK_SECRET)
+      stripe_event = Stripe::Webhook.construct_event(
+        payload, signature, WEBHOOK_SECRET,
+        tolerance: MAX_EVENT_AGE
+      )
       Rails.logger.info "Stripe event received: #{stripe_event["type"]} #{stripe_event.id}"
 
       return if skip_processing?(stripe_event)
