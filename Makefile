@@ -1,23 +1,30 @@
+DOCKER_COMPOSE = docker-compose -f ./development/docker-compose.yml
+
 build:
-	docker-compose -f ./development/docker-compose.yml build
-	docker-compose -f ./development/docker-compose.yml run web bundle
-	docker-compose -f ./development/docker-compose.yml run web rake db:create db:migrate
-	docker-compose -f ./development/docker-compose.yml run test rake db:create db:migrate
+	$(DOCKER_COMPOSE) build
+	$(DOCKER_COMPOSE) run web rake db:create db:migrate
+	$(DOCKER_COMPOSE) run test rake db:create db:migrate
+
+build\:no_cache:
+	$(DOCKER_COMPOSE) build --no-cache
 
 start:
-	docker-compose -f ./development/docker-compose.yml up web sidekiq db redis
+	$(DOCKER_COMPOSE) up web sidekiq db redis
 
 console:
-	docker-compose -f ./development/docker-compose.yml run web rails console
+	$(DOCKER_COMPOSE) run web rails console
+
+bash:
+	$(DOCKER_COMPOSE) run web /bin/bash
 
 logs:
-	docker-compose -f ./development/docker-compose.yml run web tail -f log/development.log
+	$(DOCKER_COMPOSE) run web tail -f log/development.log
 
 test:
-	docker-compose -f ./development/docker-compose.yml run test rspec
+	$(DOCKER_COMPOSE) run test rspec
 
 restart:
-	docker-compose -f ./development/docker-compose.yml restart web sidekiq
+	$(DOCKER_COMPOSE) restart web sidekiq
 
 stripe_listen:
 	stripe listen --forward-to localhost:3000/webhook --events customer.subscription.created,invoice.payment_succeeded,customer.subscription.deleted
