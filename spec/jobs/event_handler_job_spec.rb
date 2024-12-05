@@ -62,15 +62,28 @@ RSpec.describe EventHandlerJob, type: :job do
 
   context "when event is 'subscription deleted'" do
     let!(:event) { create :event, 'customer.subscription.deleted', subscription_id: }
-
     let(:subscription_id) { "sub_1QOHUKC1ckIJ9PpdfbEdGIqH" }
-    let!(:subscription) { create(:subscription, :paid, stripe_id: subscription_id) }
 
-    it 'update Subscription' do
-      run_job
+    context 'when Subscription exists in database' do
+      let!(:subscription) { create(:subscription, :paid, stripe_id: subscription_id) }
 
-      expect(subscription.reload).to be_canceled
-      expect(subscription.events).to include(event)
+      it 'updates Subscription' do
+        run_job
+
+        expect(subscription.reload).to be_canceled
+        expect(subscription.events).to include(event)
+      end
+    end
+
+    context 'when Subscription does not exist in database' do
+      it 'creates paid Subscription' do
+        expect { run_job }.to change(Subscription, :count).by(1)
+        expect(Subscription.last).to have_attributes(
+          state: 'unpaid',
+          stripe_id: subscription_id,
+          events: [ event ]
+        )
+      end
     end
   end
 
