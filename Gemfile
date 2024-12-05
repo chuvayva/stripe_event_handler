@@ -25,7 +25,6 @@ gem "bootsnap", require: false
 
 gem "stripe"
 gem "enumerize"
-gem "aasm"
 gem "sidekiq", "~> 7.3"
 
 group :development, :test do

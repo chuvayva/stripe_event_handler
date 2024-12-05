@@ -8,17 +8,12 @@ module Events
         return
       end
 
-      subscription = Subscription.find_by_stripe_id(stripe_subscription_id)
-
-      if subscription.blank?
-        Subscription.create(stripe_id: stripe_subscription_id, events: [ event ], state: :paid)
-        Rails.logger.info "Subscription #{stripe_subscription_id} not found. Create it"
-        return
+      ActiveRecord::Base.transaction do
+        subscription = Subscription.where(stripe_id: stripe_subscription_id).first_or_initialize
+        subscription.state = :paid
+        subscription.save
+        subscription.events << event
       end
-
-      subscription.pay_invoice
-      subscription.events << event
-      subscription.save
     end
   end
 end

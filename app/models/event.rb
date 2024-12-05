@@ -1,4 +1,5 @@
 class Event < ApplicationRecord
+  extend Enumerize
   enumerize :state, in: %i[pending processing done error], default: :pending, predicates: true
 
   validates :stripe_id, presence: true, uniqueness: true

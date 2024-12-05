@@ -10,7 +10,6 @@ The Stripe Event Handler is simple rails application that receives and processes
 ## What Is Special About Me
 
 * [Stripe Ruby Library](https://github.com/stripe/stripe-ruby) is for webhook events processing
-* [AASM - Ruby state machines](https://redux-saga.js.org) for subscription state management
 * Development is fully containerized with Docker
 * Makefile has the most common commands to run the project
 

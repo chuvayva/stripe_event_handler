@@ -1,7 +1,8 @@
 class Subscription < ApplicationRecord
-  include SubscriptionStateMachine
+  extend Enumerize
+  enumerize :state, in: %i[unpaid paid canceled], default: :unpaid, predicates: true, scope: :shallow
 
-  has_and_belongs_to_many :events
+  has_many :events
 
   validates :stripe_id, presence: true, uniqueness: true
 end
