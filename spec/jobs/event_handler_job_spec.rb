@@ -76,10 +76,10 @@ RSpec.describe EventHandlerJob, type: :job do
     end
 
     context 'when Subscription does not exist in database' do
-      it 'creates paid Subscription' do
+      it 'creates canceled Subscription' do
         expect { run_job }.to change(Subscription, :count).by(1)
         expect(Subscription.last).to have_attributes(
-          state: 'unpaid',
+          state: 'canceled',
           stripe_id: subscription_id,
           events: [ event ]
         )
