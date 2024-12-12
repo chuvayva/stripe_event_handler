@@ -1,33 +1,58 @@
-DOCKER_COMPOSE = docker-compose -f ./development/docker-compose.yml
+# TODO: Review docker artifacts: conainers, images, volumes
 
 build:
-	$(DOCKER_COMPOSE) build
-	$(DOCKER_COMPOSE) run web rake db:create db:migrate
-	$(DOCKER_COMPOSE) run test rake db:create db:migrate
-
-build\:no_cache:
-	$(DOCKER_COMPOSE) build --no-cache
+	docker compose build
+	docker compose run --rm app rake db:prepare db:test:prepare
 
 start:
-	$(DOCKER_COMPOSE) up web sidekiq db redis
+	docker compose up
 
 console:
-	$(DOCKER_COMPOSE) run web rails console
+	docker compose run --rm app rails console
 
 bash:
-	$(DOCKER_COMPOSE) run web /bin/bash
+	docker compose run --rm app /bin/bash
 
 logs:
-	$(DOCKER_COMPOSE) run web tail -f log/development.log
+	docker compose run --rm app tail -f log/development.log
 
 test:
-	$(DOCKER_COMPOSE) run test rspec
+	docker compose run --rm app rspec $(filter-out $@, $(MAKECMDGOALS))
 
 restart:
-	$(DOCKER_COMPOSE) restart web sidekiq
+	docker compose run --rm app restart app sidekiq
 
-stripe_listen:
+
+# Shortcuts
+
+s: start
+b: build
+c: console
+ba: bash
+t:
+	docker compose run --rm app rspec $(filter-out $@, $(MAKECMDGOALS))
+
+# Stripe
+
+stripe-listen:
 	stripe listen --forward-to localhost:3000/webhook --events customer.subscription.created,invoice.payment_succeeded,customer.subscription.deleted
 
-stripe_test:
+stripe-test:
 	stripe trigger customer.subscription.deleted
+
+
+# Docker
+
+up:
+	docker compose up
+
+down:
+	docker compose down
+
+down-volumes:
+	docker compose down --volumes
+
+
+# Prevent errors when passing arguments
+%:
+	@:
