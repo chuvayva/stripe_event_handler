@@ -8,10 +8,10 @@ module Events
         return
       end
 
+      subscription = Subscription.where(stripe_id: stripe_subscription_id).first_or_initialize
+
       ActiveRecord::Base.transaction do
-        subscription = Subscription.where(stripe_id: stripe_subscription_id).first_or_initialize
-        subscription.state = :paid
-        subscription.save
+        subscription.pay_invoice!
         subscription.events << event
       end
     end
