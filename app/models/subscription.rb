@@ -1,6 +1,5 @@
 class Subscription < ApplicationRecord
-  extend Enumerize
-  enumerize :state, in: %i[unpaid paid canceled], default: :unpaid, predicates: true, scope: :shallow
+  include SubscriptionStateMachine
 
   has_many :events
 

@@ -1,36 +1,38 @@
 # TODO: Review docker artifacts: conainers, images, volumes
 
-build:
+setup:
 	docker compose build
-	docker compose run --rm app rake db:prepare db:test:prepare
+	make run-app rake db:prepare
+	make run-app rake db:test:prepare
 
 start:
 	docker compose up
 
-console:
-	docker compose run --rm app rails console
-
-bash:
-	docker compose run --rm app /bin/bash
-
-logs:
-	docker compose run --rm app tail -f log/development.log
-
 test:
-	docker compose run --rm app rspec $(filter-out $@, $(MAKECMDGOALS))
+	make run-app rspec $(filter-out $@, $(MAKECMDGOALS))
 
-restart:
-	docker compose run --rm app restart app sidekiq
+console: # quotes prevent recursion for 'console'
+	make run-app 'rails console' 
+
+shell:
+	make run-app /bin/bash
+
+
+# General
+
+run-app:
+	docker compose run --rm app $(filter-out $@, $(MAKECMDGOALS))
 
 
 # Shortcuts
 
 s: start
-b: build
 c: console
-ba: bash
+sh: shell
+r:
+	make run-app $(filter-out $@, $(MAKECMDGOALS))
 t:
-	docker compose run --rm app rspec $(filter-out $@, $(MAKECMDGOALS))
+	make run-app rspec $(filter-out $@, $(MAKECMDGOALS))
 
 # Stripe
 
