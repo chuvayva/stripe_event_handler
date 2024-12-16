@@ -12,7 +12,7 @@ module SubscriptionStateMachine
       after_all_transitions :log_state_change
 
       event :pay_invoice do
-        transitions to: :paid
+        transitions from: %i[unpaid paid], to: :paid
       end
 
       event :cancel_subscription do
