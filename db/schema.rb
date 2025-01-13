@@ -10,9 +10,9 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2024_12_05_083347) do
+ActiveRecord::Schema[8.0].define(version: 2025_01_13_094323) do
   # These are extensions that must be enabled in order to support this database
-  enable_extension "plpgsql"
+  enable_extension "pg_catalog.plpgsql"
 
   create_table "events", force: :cascade do |t|
     t.string "stripe_id", null: false
@@ -20,7 +20,6 @@ ActiveRecord::Schema[7.2].define(version: 2024_12_05_083347) do
     t.string "state", default: "pending", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.jsonb "json"
     t.bigint "subscription_id"
     t.index ["stripe_id"], name: "index_events_on_stripe_id", unique: true
     t.index ["subscription_id"], name: "index_events_on_subscription_id"
