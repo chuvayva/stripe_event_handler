@@ -1,30 +1,39 @@
 require 'rails_helper'
 
 RSpec.describe EventHandlerJob, type: :job do
-  subject(:run_job) { EventHandlerJob.perform_now(event) }
-  let(:event) { create :event, 'customer.subscription.created' }
+  subject(:run_job) { EventHandlerJob.perform_now(stripe_id: stripe_event.id, stripe_type: stripe_event.type) }
 
-  it 'updates event state and json' do
-    expect { run_job }
-      .to change(event, :state).to('done')
-      .and change(event, :json).to(nil)
+  let(:event_data) { build(:stripe_event_data, 'customer.subscription.created') }
+  let(:stripe_event) { build(:stripe_event, data: event_data) }
+
+  before do
+    allow(Stripe::Event).to receive(:retrieve).and_return(stripe_event)
+  end
+
+  it 'creates Event' do
+    expect { run_job }.to change(Event, :count).by(1)
+    expect(Event.last).to have_attributes(
+      state: 'done',
+      stripe_id: be,
+      stripe_type: be,
+    )
   end
 
   context "when event is 'subscription created'" do
-    let(:event) { create :event, 'customer.subscription.created' }
+    let(:event_data) { build(:stripe_event_data, 'customer.subscription.created') }
 
     it 'creates Subscription' do
       expect { run_job }.to change(Subscription, :count).by(1)
       expect(Subscription.last).to have_attributes(
         state: 'unpaid',
         stripe_id: be,
-        events: [ event ]
+        events: be,
       )
     end
   end
 
   context "when event is 'invoice paid'" do
-    let(:event) { create :event, 'invoice.payment_succeeded', subscription_id: }
+    let(:event_data) { build(:stripe_event_data, 'invoice.payment_succeeded', subscription_id:) }
 
     context 'when invoice event is not connected to a Subscription' do
       let(:subscription_id) { nil }
@@ -39,10 +48,9 @@ RSpec.describe EventHandlerJob, type: :job do
       let!(:subscription) { create(:subscription, :unpaid, stripe_id: subscription_id) }
 
       it 'updates Subscription' do
-        run_job
+        expect { run_job }.to change(subscription.events, :count).by(1)
 
         expect(subscription.reload).to be_paid
-        expect(subscription.events).to include(event)
       end
     end
 
@@ -54,14 +62,14 @@ RSpec.describe EventHandlerJob, type: :job do
         expect(Subscription.last).to have_attributes(
           state: 'paid',
           stripe_id: subscription_id,
-          events: [ event ]
+          events: be,
         )
       end
     end
   end
 
   context "when event is 'subscription deleted'" do
-    let!(:event) { create :event, 'customer.subscription.deleted', subscription_id: }
+    let!(:event_data) { build(:stripe_event_data, 'customer.subscription.deleted', subscription_id:) }
     let(:subscription_id) { "sub_1QOHUKC1ckIJ9PpdfbEdGIqH" }
 
     let(:stripe_invoice) { build(:stripe_invoice, status: invoice_status) }
@@ -82,7 +90,7 @@ RSpec.describe EventHandlerJob, type: :job do
         expect(Subscription.last).to have_attributes(
           state: 'canceled',
           stripe_id: subscription_id,
-          events: [ event ]
+          events: be,
         )
       end
     end
@@ -100,10 +108,9 @@ RSpec.describe EventHandlerJob, type: :job do
       let(:invoice_status) { 'paid' }
 
       it 'updates Subscription' do
-        run_job
+        expect { run_job }.to change(subscription.events, :count).by(1)
 
         expect(subscription.reload).to be_canceled
-        expect(subscription.events).to include(event)
       end
     end
 
@@ -121,10 +128,9 @@ RSpec.describe EventHandlerJob, type: :job do
       let(:invoice_status) { 'paid' }
 
       it 'updates Subscription' do
-        run_job
+        expect { run_job }.to change(subscription.events, :count).by(1)
 
         expect(subscription.reload).to be_canceled
-        expect(subscription.events).to include(event)
       end
     end
 
@@ -147,7 +153,6 @@ RSpec.describe EventHandlerJob, type: :job do
       expect { run_job }.to raise_error(RuntimeError)
       expect(Event.last).to have_attributes(
         state: 'error',
-        json: be,
       )
     end
   end

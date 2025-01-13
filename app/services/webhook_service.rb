@@ -1,9 +1,5 @@
 module WebhookService
   WEBHOOK_SECRET = Rails.application.credentials.dig(:stripe, :webhook_secret)
-  EVENT_TYPES_WHITELIST = %w[customer.subscription.created
-                             customer.subscription.deleted
-                             invoice.payment_succeeded]
-
   MAX_EVENT_AGE = 300 # seconds
 
   class << self
@@ -16,13 +12,10 @@ module WebhookService
 
       return if skip_processing?(stripe_event)
 
-      event = Event.create(
+      EventHandlerJob.perform_later(
         stripe_id: stripe_event.id,
         stripe_type: stripe_event.type,
-        json: stripe_event.to_json
       )
-
-      EventHandlerJob.perform_later event
     rescue JSON::ParserError
       Rails.logger.error "Stripe service. Invalid payload"
       nil
@@ -39,7 +32,7 @@ module WebhookService
         return true
       end
 
-      if !stripe_event.type.in?(EVENT_TYPES_WHITELIST)
+      if EventLogic::HANDLERS.keys.exclude?(stripe_event.type)
         Rails.logger.warn "Stripe event type is not supported: #{stripe_event.type}"
         return true
       end

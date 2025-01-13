@@ -1,29 +1,42 @@
 module EventLogic
+  HANDLERS = {
+    "customer.subscription.created" => Events::CustomerSubscriptionCreated,
+    "customer.subscription.deleted" => Events::CustomerSubscriptionDeleted,
+    "invoice.payment_succeeded" => Events::InvoicePaymentSucceeded
+  }
+
   class << self
-    def process_event(event)
-      return unless can_process?(event)
+    def process_event(stripe_id:, stripe_type:)
+      event = Event.where(stripe_id:, stripe_type:).lock("FOR UPDATE").first_or_create
+      error = nil
 
-      event.update(state: :processing)
-      Rails.logger.info "Event processing started: #{event.stripe_type} #{event.stripe_id}"
+      ActiveRecord::Base.transaction do
+        event = Event.lock("FOR UPDATE").find(event.id)
 
-      event_data = JSON.parse(event.json)
-      stripe_event = Stripe::Event.construct_from(event_data)
+        return if event.done?
 
-      klass = event.stripe_type.gsub(".", "_").classify
-      "Events::#{klass}".constantize.call(event, stripe_event)
+        event.update(state: :processing)
+        Rails.logger.info "Event processing started: #{event.stripe_type} #{event.stripe_id}"
 
-      event.update(state: :done, json: nil)
+        begin
+          stripe_event = Stripe::Event.retrieve(event.stripe_id)
+          klass = HANDLERS[event.stripe_type]
+          klass.call(event, stripe_event)
 
-      Rails.logger.info "Event processed: #{event.stripe_type} #{event.stripe_id}"
-    rescue => e
-      event.update(state: :error)
-      Rails.logger.error "Event processing failed: #{event.stripe_type} #{event.stripe_id}. Error: #{e.message}"
+          event.update(state: :done)
 
-      raise
-    end
+          Rails.logger.info "Event processed: #{event.stripe_type} #{event.stripe_id}"
+        rescue => e
+          event.update(state: :error)
+          Rails.logger.error "Event processing failed: #{event.stripe_type} #{event.stripe_id}. Error: #{e.message}"
 
-    def can_process?(event)
-      event.pending? || event.error?
+          # Don't re-raise the error here
+          # because we want to ensure a successfull transaction to save state: :error
+          error = e
+        end
+      end
+
+      raise error if error
     end
   end
 end

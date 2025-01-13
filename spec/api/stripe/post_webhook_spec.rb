@@ -12,16 +12,6 @@ describe "POST /webhook", type: :request do
       end
     end
 
-    it 'creates Event' do
-      expect { post_webhook_path }.to change(Event, :count).by(1)
-      expect(Event.last).to have_attributes(
-        state: 'pending',
-        stripe_id: be,
-        stripe_type: be,
-        json: be,
-      )
-    end
-
     it 'schedule a background job' do
       expect {
         post_webhook_path
@@ -32,14 +22,6 @@ describe "POST /webhook", type: :request do
       post_webhook_path
 
       expect(response).to have_http_status(200)
-    end
-
-    context 'when event exists' do
-      let!(:event) { create :event, stripe_id: payload[:id] }
-
-      it 'does not create Event' do
-        expect { post_webhook_path }.not_to change(Event, :count)
-      end
     end
   end
 
