@@ -11,9 +11,9 @@ module EventLogic
       error = nil
 
       ActiveRecord::Base.transaction do
-        event = Event.lock("FOR UPDATE").find(event.id)
+        event = Event.lock("FOR UPDATE SKIP LOCKED").find(event.id)
 
-        return if event.done?
+        return if event.nil? || event.done?
 
         event.update(state: :processing)
         Rails.logger.info "Event processing started: #{event.stripe_type} #{event.stripe_id}"
