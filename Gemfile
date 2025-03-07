@@ -9,7 +9,7 @@ gem "bootsnap", require: false
 gem "stripe"
 gem "enumerize"
 gem "aasm"
-gem "sidekiq", "~> 7.3"
+gem "sidekiq", "~> 8.0"
 
 group :development, :test do
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
