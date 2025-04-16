@@ -1,15 +1,16 @@
 source "https://rubygems.org"
-ruby "3.3.0"
 
-gem "rails", "~> 8.0.1"
-gem "pg", "~> 1.1"
-gem "puma", ">= 5.0"
+ruby "3.3.0"
+gem "rails", "~> 8.0.2"
+
+gem "pg"
+gem "puma"
 gem "bootsnap", require: false
 
 gem "stripe"
 gem "enumerize"
 gem "aasm"
-gem "sidekiq", "~> 7.3"
+gem "sidekiq"
 
 group :development, :test do
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
